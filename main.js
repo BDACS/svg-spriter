@@ -10,6 +10,32 @@ const config = {
   },
 };
 
+const toCamelCase = (str) => {
+  return str.replace(/-([a-z])/g, function (g) {
+    return g[1].toUpperCase();
+  });
+};
+
+const modifyAttributesToCamelCase = (node) => {
+  const attributes = node.attributes;
+  for (let i = attributes.length - 1; i >= 0; i--) {
+    const attr = attributes[i];
+    const camelCaseName = toCamelCase(attr.name);
+    if (camelCaseName !== attr.name) {
+      node.removeAttribute(attr.name);
+      node.setAttribute(camelCaseName, attr.value);
+    }
+  }
+
+  const childNodes = node.childNodes;
+  for (let i = 0; i < childNodes.length; i++) {
+    const child = childNodes[i];
+    if (child.nodeType === 1) {
+      modifyAttributesToCamelCase(child);
+    }
+  }
+};
+
 const transferSvgToSprite = async () => {
   const spriter = new SVGSpriter(config);
   const folderPath = "./icons";
@@ -62,6 +88,7 @@ const transferSvgToSprite = async () => {
 
   Array.from(symbolElements).forEach((symbol) => {
     symbol.removeAttribute("fill");
+    modifyAttributesToCamelCase(symbol);
   });
 
   const modifiedSvgCode = xmlDoc.toString();
